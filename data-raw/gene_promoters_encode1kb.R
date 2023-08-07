@@ -1,3 +1,5 @@
+#samuel ahuno
+#generate promoter regions for genes; 1kb upstream and 1kb downstream
 ## code to prepare `gene_promoters_encode1kb` dataset goes here
 #library(methylONT)
 library(data.table)
@@ -28,7 +30,7 @@ grch38_dt <- grch38_dt[, .(ensgene, entrez, symbol, biotype, description)]
 dt <- dt[grch38_dt, on = "ensgene", nomatch = NULL]
 #dt[symbol == "",] # remove genes without names 
 #na.omit(dt, "symbol")
-dt <- dt[, .(seqnames, start, end, strand, ensgene.version, symbol, biotype, key = paste0(symbol,"_" ,ensgene.version))] #save only needed parts 
+dt <- dt[, .(seqnames, start, end, strand, ensgene.version, symbol, biotype, key = paste0(symbol,"_" ,ensgene.version, strand))] #save only needed parts 
 setkey(dt, key)
 
 dt <- unique(dt, by = "key") #remove duplicate promoters
@@ -39,6 +41,7 @@ dt <- unique(dt, by = "key") #remove duplicate promoters
 message("adding transcription start site")
 dt[,`:=`(transcription_start_site = fcase(strand == "+", start, strand == "-", end))] #set transcription start site
 
+dt[,.N, by = biotype] #check biotype
 
 gr_tss_encode <- GenomicRanges::makeGRangesFromDataFrame(dt, keep.extra.columns = TRUE, starts.in.df.are.0based = TRUE)
 gene_promoters_encode1kb <- GenomicRanges::promoters(gr_tss_encode, upstream = 1000, downstream = 1000)
@@ -51,9 +54,12 @@ gene_promoters_encode1kb_numCpGs <- Biostrings::vcountPattern("CG", gene_promote
 mcols(gene_promoters_encode1kb)$numGCs <- gene_promoters_encode1kb_numGCs
 mcols(gene_promoters_encode1kb)$numCGs <- gene_promoters_encode1kb_numCpGs
 
+gene_promoters_encode1kb_proteinCoding <- gene_promoters_encode1kb[gene_promoters_encode1kb$biotype == "protein_coding"]
+#protein_coding
 #uncomment to make promoters for encode genes
 #usethis::use_data_raw("gene_promoters_encode1kb")
 usethis::use_data(gene_promoters_encode1kb, overwrite = TRUE)
+usethis::use_data(gene_promoters_encode1kb_proteinCoding, overwrite = TRUE)
 
 
 
