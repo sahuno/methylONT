@@ -1,3 +1,4 @@
 ^LICENSE\.md$
 ^get_cpgs$
 ^data-raw$
+^README\.Rmd$
